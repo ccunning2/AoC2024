@@ -8,7 +8,7 @@ part1 :-
         write('The safe count is '), write(Total).
 
 part2 :-
-        read_file_construct_list('2/sample.txt', List),
+        read_file_construct_list('2/input.txt', List),
         make_each_row_list_of_numbers(List,[], NumList),
         count_safe_2(NumList, 0, Total),
         write('The safe count is '), write(Total).
@@ -127,23 +127,42 @@ count_safe([H | T], Acc, Total) :-
 
 count_safe_2([], Acc, Acc).
 count_safe_2([H | T], Acc, Total) :-
-    (   
-        % Case 1: H passes check_safety_2
-        check_safety_2(H) -> 
-        NewAcc is Acc + 1, asserta(good(H)),
-        count_safe_2(T, NewAcc, Total)
+    (
+% Case 1 -- normal safety check passes
+    check_safety(H) -> NewAcc is Acc + 1,
+    count_safe_2(T, NewAcc, Total)
     ;
-        % Case 2: H is a list and its tail passes check_safety_2
-        (is_list(H), H = [_ | Tail], check_safety(Tail) ->
-        NewAcc is Acc + 1, asserta(tail(Tail)),
-        count_safe_2(T, NewAcc, Total)
-        ;
-        % Case 3: Neither passes; do not increment
-        NewAcc is Acc, asserta(bad(H)),
-        count_safe_2(T, NewAcc, Total)
-        )
+    %Case 2 -- we try removing elements
+    remove_one_item_check(H, check_safety) -> NewAcc is Acc + 1,
+    count_safe_2(T, NewAcc,Total)
+    ;
+    %Case 3 -- it's not safe
+    NewAcc is Acc,
+    count_safe_2(T, NewAcc, Total)
     ).
+% count_safe_2([H | T], Acc, Total) :-
+%     (   
+%         % Case 1: H passes check_safety_2
+%         check_safety_2(H) -> 
+%         NewAcc is Acc + 1, asserta(good(H)),
+%         count_safe_2(T, NewAcc, Total)
+%     ;
+%         % Case 2: H is a list and its tail passes check_safety_2
+%         (is_list(H), H = [_ | Tail], check_safety(Tail) ->
+%         NewAcc is Acc + 1, asserta(tail(Tail)),
+%         count_safe_2(T, NewAcc, Total)
+%         ;
+%         % Case 3: Neither passes; do not increment
+%         NewAcc is Acc, asserta(bad(H)),
+%         count_safe_2(T, NewAcc, Total)
+%         )
+%     ).
 % 622, 746
+
+remove_one_item_check(List, Condition) :-
+    remove_one(List, NewList),
+    call(Condition, NewList),
+    !. %Add the 'cut' here to stop more searches
 
 
 %Example that should pass [37,38,37,34,31]
